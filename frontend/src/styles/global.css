@@ -35,3 +35,56 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .error-text { color: #b42318; }
 .status-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 10px; font-size: 12px; color: var(--muted); }
 .legend-item { background: #eef2f7; border-radius: 999px; padding: 2px 10px; }
+
+/* 气象复核 */
+.identity-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #eef4ff; border: 1px solid #c7d9fb; border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 12px; }
+.identity-bar > span { color: var(--muted); font-size: 12px; }
+.identity-input { border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 13px; background: #fff; }
+.identity-hint { font-style: normal; color: var(--muted); font-size: 12px; }
+.cell-mono { white-space: nowrap; }
+.cell-criteria { font-size: 12px; }
+.missing-tag { display: inline-block; background: #fff4e5; color: #b54708; border: 1px solid #f5c18b; border-radius: 4px; padding: 0 6px; margin: 1px 2px; font-size: 12px; }
+.abnormal-tag { display: inline-block; background: #fef3f2; color: #b42318; border: 1px solid #fda29b; border-radius: 4px; padding: 0 6px; margin: 1px 2px; font-size: 12px; }
+.abnormal-cell { color: #b42318; font-weight: 600; }
+.ok-tag { display: inline-block; background: #ecfdf3; color: #027a48; border: 1px solid #73e2a3; border-radius: 4px; padding: 0 6px; font-size: 12px; }
+.lock-tag { color: var(--muted); font-size: 12px; }
+.muted-text { color: var(--muted); font-size: 12px; }
+.row-locked { background: #fafbfc; }
+.data-table td.cell-criteria, .data-table td:nth-last-child(3) { max-width: 260px; }
+
+/* 弹窗 */
+.modal-mask { position: fixed; inset: 0; background: rgba(16, 24, 40, 0.45); display: flex; align-items: center; justify-content: center; z-index: 20; }
+.modal { background: #fff; border-radius: 10px; width: 640px; max-width: calc(100vw - 32px); max-height: calc(100vh - 60px); overflow: auto; padding: 18px 20px; }
+.modal-title { margin: 0 0 4px; font-size: 16px; }
+.modal-sub { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.form-item { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.form-item input, .form-item textarea, .form-item select { border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 13px; color: #1f2937; }
+.form-item input:disabled { background: #f1f5f9; color: var(--muted); }
+.form-item em { color: #b42318; font-style: normal; }
+.basis-item { margin-top: 4px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin: 0 0 8px; }
+.review-grid dt { font-size: 12px; color: var(--muted); }
+.review-grid dd { margin: 0; font-size: 13px; }
+.review-criteria { list-style: none; padding: 0; margin: 0 0 10px; font-size: 13px; }
+.review-criteria li { padding: 3px 0; }
+.criteria-bad { color: #b42318; }
+.criteria-ok { color: #027a48; }
+.criteria-info { color: var(--muted); }
+
+/* 火险预警看板 */
+.warning-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 12px 0; }
+.warning-card { border-radius: 8px; padding: 12px; border: 1px solid var(--border); background: #fff; text-align: center; }
+.warning-card .warning-label { display: block; font-size: 12px; color: var(--muted); }
+.warning-card .warning-value { font-size: 24px; font-weight: 700; }
+.warning-card.is-normal { background: #f6fef9; }
+.warning-card.is-blue { background: #eff8ff; border-color: #b2ddff; }
+.warning-card.is-yellow { background: #fffaeb; border-color: #fedf89; }
+.warning-card.is-orange { background: #fff6ed; border-color: #fb9a4f; }
+.warning-card.is-red { background: #fef3f2; border-color: #f97066; }
+.warning-card.is-red .warning-value { color: #b42318; }
+.board-title { font-size: 15px; margin: 16px 0 0; }
+.board-note { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+.ok-text { color: #027a48; margin-left: 8px; }
+.wrap-cell { white-space: pre-line; line-height: 1.5; min-width: 220px; }

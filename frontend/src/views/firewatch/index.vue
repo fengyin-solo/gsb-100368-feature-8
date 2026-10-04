@@ -3,7 +3,7 @@
     <header class="page-head">
       <div>
         <h2>火险监测管理</h2>
-        <p class="page-desc">维护火险监测点，围绕监测点编号、监测区域、火险等级、风力等级做登记、筛选与状态流转。</p>
+        <p class="page-desc">火险监测点等级由气象观测复核结论自动重算；「等级依据」记录了来源观测记录与重算时间，手工动作只用于临时调度。</p>
       </div>
       <div class="page-actions">
         <button class="btn primary" type="button" @click="openCreate">登记火险监测点</button>
@@ -82,16 +82,20 @@ import {
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('firewatch')
-const columns = ["监测点编号", "监测区域", "火险等级", "风力等级", "相对湿度", "气温读数", "监测时间", "监测状态"]
+const columns = ["监测点编号", "监测区域", "火险等级", "风力等级", "相对湿度", "气温读数", "监测时间", "等级依据", "重算时间", "监测状态"]
 const actions = ["更新等级", "解除预警", "升级预警"]
 const statuses = ["正常", "蓝色预警", "黄色预警", "橙色预警", "红色预警"]
-const stats = [{"label": "监测点数", "value": 0}, {"label": "红色预警数", "value": 0}, {"label": "今日新增预警", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+const stats = computed(() => [
+  { label: "监测点数", value: rows.value.length },
+  { label: "红色预警数", value: rows.value.filter((row) => String(row.status) === "红色预警").length },
+  { label: "橙色及以上", value: rows.value.filter((row) => ["橙色预警", "红色预警"].includes(String(row.status))).length },
+])
 const statusSummary = computed(() =>
   statuses.map((status: string) => ({
     status,

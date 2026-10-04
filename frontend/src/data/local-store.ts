@@ -2,7 +2,8 @@ import { SEED_ROWS } from './seed'
 import type { EntryRow } from './types'
 
 // 本地持久化：数据放在 localStorage 里，刷新、关掉再打开都还在。
-const STORAGE_KEY = 'forest-fire-patrol:entries'
+// v2：气象复核口径（缺测/异常/复核结论）与火险联动字段；旧版示例数据结构不同，直接换键不迁移。
+const STORAGE_KEY = 'forest-fire-patrol:entries:v2'
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T

@@ -3,7 +3,7 @@
     <header class="page-head">
       <div>
         <h2>防火检查站管理</h2>
-        <p class="page-desc">维护防火检查站，围绕站点编号、站点位置、值守人员、检查项目做登记、筛选与状态流转。</p>
+        <p class="page-desc">气象复核完成后，检查站按关联区域同步生成核查清单（见「核查清单」列）；升级检查时按红色核查项逐项落实。</p>
       </div>
       <div class="page-actions">
         <button class="btn primary" type="button" @click="openCreate">登记防火检查站</button>
@@ -43,7 +43,11 @@
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="String(row.id)">
-          <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
+          <td
+            v-for="column in columns"
+            :key="column"
+            :class="{ 'wrap-cell': column === '核查清单' }"
+          >{{ row[column] ?? '—' }}</td>
           <td>{{ row.status }}</td>
           <td class="row-actions">
             <button
@@ -82,16 +86,20 @@ import {
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('checkpoint')
-const columns = ["站点编号", "站点位置", "值守人员", "检查项目", "通行车辆数", "收缴火种数", "值班日期", "运行状态"]
+const columns = ["站点编号", "站点位置", "关联区域", "值守人员", "风险等级", "检查项目", "核查清单", "清单更新时间", "通行车辆数", "收缴火种数", "值班日期", "运行状态"]
 const actions = ["升级检查", "关闭站点", "安排换岗"]
 const statuses = ["正常检查", "临时关闭", "升级检查", "等待换岗"]
-const stats = [{"label": "站点总数", "value": 0}, {"label": "正常检查数", "value": 0}, {"label": "收缴火种数", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
-const filterFields = columns.slice(0, 3)
+const filterFields = ["站点编号", "站点位置", "关联区域"]
+const stats = computed(() => [
+  { label: "站点总数", value: rows.value.length },
+  { label: "升级检查数", value: rows.value.filter((row) => ["升级检查", "红色预警"].includes(String(row['风险等级']))).length },
+  { label: "收缴火种数", value: rows.value.reduce((sum, row) => sum + (Number(row['收缴火种数']) || 0), 0) },
+])
 const statusSummary = computed(() =>
   statuses.map((status: string) => ({
     status,

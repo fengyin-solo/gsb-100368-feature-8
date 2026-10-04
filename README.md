@@ -14,7 +14,9 @@
 ├── frontend/                 Vue 3 + Vite + TypeScript 前端（唯一运行单元）
 │   ├── src/views/            每个业务模块一个页面
 │   ├── src/api/local-service.ts   本地数据服务：列表、筛选、动作流转、导出
+│   ├── src/api/weather-service.ts 气象复核工作流与「气象→火险」联动编排
 │   ├── src/data/             模块元数据 / 示例数据 / localStorage 持久化
+│   ├── src/data/weather-domain.ts 缺测异常判定与火险等级重算口径（纯函数）
 │   ├── src/stores/           会话与筛选状态
 │   └── vite.config.ts        dev server 配置（open: false，无 /api 代理）
 ├── .gitignore
@@ -68,4 +70,26 @@ npm run build
 - 字段、状态、动作与流转目标集中在 `frontend/src/data/modules.ts`；示例数据在
   `frontend/src/data/seed.ts`。
 - 状态流转只允许在 `local-service.ts` 里改，页面组件不做业务判断。
-- 想回到初始数据：清掉浏览器里 `forest-fire-patrol:entries` 这一项，或调用 `resetModule(模块)`。
+- 想回到初始数据：清掉浏览器里 `forest-fire-patrol:entries:v2` 这一项，或调用 `resetModule(模块)`。
+
+## 气象观测复核口径
+
+气象模块走独立的复核工作流（`src/api/weather-service.ts`），判定口径集中在
+`src/data/weather-domain.ts`，不经通用 `runAction`：
+
+- 气温、相对湿度、风速风向、降水量**任一缺测不能直接确认**；缺测值**保留空白，不按前一有效值
+  补齐**，避免猜测值进入火险评分。
+- 非空但超量程/无法解析的值判为异常（如气温 99.9℃、湿度 120%），标记异常或保存修正都必须
+  填写修正依据；观测时间（采样时间）在修正时保持不变。
+- **观测员只能改本班次记录**（页面可切换当前身份/班次验证）；复核通过后记录锁定，
+  `lockVersion` +1，重复提交不会覆盖已审核结论；并发审核以打开复核窗口时的锁版本做
+  compare-and-set，只落第一份结论。
+- 复核通过后沿「气象 → 火险」现有调用链同步：
+  - 火险监测点（firewatch）：按站点最新已复核记录重算 `status/火险等级`，写入等级依据与
+    重算时间，监测时间沿用观测采样时间；
+  - 巡护任务（patrol）：同区域任务写入「风险等级 / 风险提示」；
+  - 防火检查站（checkpoint）：按关联区域重算并生成「核查清单」（整体替换，重复重算幂等）；
+  - 运营概览页新增「火险预警看板」，可一键按全部已复核记录重算。
+- 只有 `已审核/已修正 + 复核人` 且四要素齐全的记录参与重算；未复核、缺测或异常未修正的记录
+  不产生等级。火险评分：温度（0–3）+ 低湿（0–3）+ 风速（0–3）+ 连旱无雨（0–2），
+  阈值映射为正常/蓝/黄/橙/红五级。
