@@ -27,9 +27,10 @@ export type PageResult = {
   size: number
 }
 
-export type ActionResult = {
+export type ActionResult<T = undefined> = {
   ok: boolean
   message: string
+  data?: T
 }
 
 export type OverviewResult = {

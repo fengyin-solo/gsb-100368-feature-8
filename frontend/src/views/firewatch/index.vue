@@ -3,7 +3,7 @@
     <header class="page-head">
       <div>
         <h2>火险监测管理</h2>
-        <p class="page-desc">维护火险监测点，围绕监测点编号、监测区域、火险等级、风力等级做登记、筛选与状态流转。</p>
+        <p class="page-desc">火险预警看板：监测点等级由复核完成的气象观测记录按气温、相对湿度、风速、降水量重算，气象复核落结论后本页自动更新。</p>
       </div>
       <div class="page-actions">
         <button class="btn primary" type="button" @click="openCreate">登记火险监测点</button>
@@ -46,6 +46,7 @@
           <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
           <td>{{ row.status }}</td>
           <td class="row-actions">
+            <button class="link" type="button" @click="recalc(row)">按复核气象重算</button>
             <button
               v-for="action in actions"
               :key="action"
@@ -64,14 +65,14 @@
     </table>
 
     <footer class="page-foot">
-      <span>共 {{ total }} 条火险监测记录</span>
+      <span>共 {{ total }} 条火险监测记录 · 等级以复核后的气象观测记录为准，手工「更新等级」仅用于应急处置</span>
       <span v-if="errorMessage" class="error-text">{{ errorMessage }}</span>
     </footer>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import {
   downloadEntries,
@@ -79,19 +80,27 @@ import {
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
+import { recalcPointFromLatest } from '@/api/weather-service'
+import { STORE_CHANGE_EVENT } from '@/data/local-store'
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('firewatch')
-const columns = ["监测点编号", "监测区域", "火险等级", "风力等级", "相对湿度", "气温读数", "监测时间", "监测状态"]
+const columns = ["监测点编号", "监测区域", "火险等级", "风力等级", "相对湿度", "气温读数", "监测时间", "数据来源", "风险说明", "监测状态"]
 const actions = ["更新等级", "解除预警", "升级预警"]
 const statuses = ["正常", "蓝色预警", "黄色预警", "橙色预警", "红色预警"]
-const stats = [{"label": "监测点数", "value": 0}, {"label": "红色预警数", "value": 0}, {"label": "今日新增预警", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+const stats = computed(() => [
+  { label: '监测点数', value: rows.value.length },
+  { label: '红色预警数', value: rows.value.filter((row) => String(row.status) === '红色预警').length },
+  { label: '预警监测点', value: rows.value.filter((row) => String(row.status) !== '正常').length },
+])
+
 const statusSummary = computed(() =>
   statuses.map((status: string) => ({
     status,
@@ -110,6 +119,16 @@ function exportRows() {
 
 function openCreate() {
   errorMessage.value = '火险监测点登记入口尚未接入审批流'
+}
+
+function recalc(row: EntryRow) {
+  errorMessage.value = ''
+  const result = recalcPointFromLatest(String(row['监测点编号']))
+  if (!result.ok) {
+    errorMessage.value = result.message
+    return
+  }
+  reload()
 }
 
 function runAction(action: string, row: EntryRow) {
@@ -133,5 +152,19 @@ function reload() {
   }
 }
 
-onMounted(reload)
+// 气象复核落结论时本看板自动跟随重算结果刷新，不需要手动点查询。
+function onStoreChange(event: Event) {
+  const detail = (event as CustomEvent<{ module: string }>).detail
+  if (detail?.module === '*' || ['weather', 'firewatch'].includes(detail?.module)) {
+    reload()
+  }
+}
+
+onMounted(() => {
+  reload()
+  window.addEventListener(STORE_CHANGE_EVENT, onStoreChange)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener(STORE_CHANGE_EVENT, onStoreChange)
+})
 </script>

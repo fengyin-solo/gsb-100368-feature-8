@@ -3,7 +3,7 @@
     <header class="page-head">
       <div>
         <h2>巡护任务管理</h2>
-        <p class="page-desc">维护巡护任务，围绕任务编号、巡护区域、巡护路线、巡护员做登记、筛选与状态流转。</p>
+        <p class="page-desc">维护巡护任务，围绕任务编号、巡护区域、巡护路线、巡护员做登记、筛选与状态流转；风险提示随关联监测点复核后的火险等级联动更新。</p>
       </div>
       <div class="page-actions">
         <button class="btn primary" type="button" @click="openCreate">登记巡护任务</button>
@@ -64,14 +64,14 @@
     </table>
 
     <footer class="page-foot">
-      <span>共 {{ total }} 条巡护任务记录</span>
+      <span>共 {{ total }} 条巡护任务记录 · 风险提示依据关联监测点最近复核结论自动更新</span>
       <span v-if="errorMessage" class="error-text">{{ errorMessage }}</span>
     </footer>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import {
   downloadEntries,
@@ -79,10 +79,11 @@ import {
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
+import { STORE_CHANGE_EVENT } from '@/data/local-store'
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('patrol')
-const columns = ["任务编号", "巡护区域", "巡护路线", "巡护员", "巡护日期", "巡护时段", "发现火情数", "任务状态"]
+const columns = ["任务编号", "巡护区域", "关联监测点", "风险提示", "巡护路线", "巡护员", "巡护日期", "巡护时段", "发现火情数", "任务状态"]
 const actions = ["开始巡护", "确认完成", "取消任务"]
 const statuses = ["待执行", "执行中", "已完成", "已取消"]
 const stats = [{"label": "今日任务数", "value": 0}, {"label": "已完成任务", "value": 0}, {"label": "巡护覆盖率", "value": 0}]
@@ -133,5 +134,19 @@ function reload() {
   }
 }
 
-onMounted(reload)
+// 气象复核同步风险提示后即时刷新本页。
+function onStoreChange(event: Event) {
+  const detail = (event as CustomEvent<{ module: string }>).detail
+  if (detail?.module === '*' || ['weather', 'patrol'].includes(detail?.module)) {
+    reload()
+  }
+}
+
+onMounted(() => {
+  reload()
+  window.addEventListener(STORE_CHANGE_EVENT, onStoreChange)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener(STORE_CHANGE_EVENT, onStoreChange)
+})
 </script>

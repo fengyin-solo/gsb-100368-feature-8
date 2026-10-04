@@ -64,14 +64,14 @@
     </table>
 
     <footer class="page-foot">
-      <span>共 {{ total }} 条防火检查站记录</span>
+      <span>共 {{ total }} 条防火检查站记录 · 气象复核完成后会向未关闭站点同步生成核查项</span>
       <span v-if="errorMessage" class="error-text">{{ errorMessage }}</span>
     </footer>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import {
   downloadEntries,
@@ -79,6 +79,7 @@ import {
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
+import { STORE_CHANGE_EVENT } from '@/data/local-store'
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('checkpoint')
@@ -133,5 +134,19 @@ function reload() {
   }
 }
 
-onMounted(reload)
+// 气象复核向检查站同步核查项后即时刷新。
+function onStoreChange(event: Event) {
+  const detail = (event as CustomEvent<{ module: string }>).detail
+  if (detail?.module === '*' || ['weather', 'checkpoint'].includes(detail?.module)) {
+    reload()
+  }
+}
+
+onMounted(() => {
+  reload()
+  window.addEventListener(STORE_CHANGE_EVENT, onStoreChange)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener(STORE_CHANGE_EVENT, onStoreChange)
+})
 </script>
